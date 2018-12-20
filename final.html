@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+<head>
+<title>Final Programming Assignment</title>
+<style>
+    body {
+        background-color: #EEEEEE;
+    }
+    label {
+        white-space: pre;
+    }
+</style>
+
+<!-- vertex shader -->
+<script type="x-shader/x-vertex" id="vshader-source">
+    attribute vec3 a_coords;
+    attribute vec3 a_normal;
+
+    uniform mat4 modelview;
+    uniform mat4 projection;
+
+    uniform mat3 normalMatrix;
+    uniform vec4 lightPosition;
+    varying vec3 L, N, R, V;
+    void main()
+    {
+        vec4 coords = vec4(a_coords,1.0);
+        vec4 eyeCoords = modelview * coords;
+        gl_Position = projection * eyeCoords;
+        N = normalize(normalMatrix * a_normal);
+        if ( lightPosition.w == 0.0 ) 
+        {
+            L = normalize(lightPosition.xyz);
+        }
+        else 
+        {
+            L = normalize(lightPosition.xyz/lightPosition.w - eyeCoords.xyz);
+        }
+        R = normalize(2.0*N*dot(N,L)-L);
+        V = normalize(-eyeCoords.xyz); 
+    }
+</script>
+
+<!-- fragment shader -->
+<script type="x-shader/x-fragment" id="fshader-source">
+    precision mediump float;
+  
+    float K_a = 0.3;
+    float K_d = 0.8;
+    float K_s = 0.4;
+    uniform vec4 diffuseColor;
+    uniform vec3 specularColor;
+    uniform float specularExponent;
+    uniform int object_flag;
+    varying vec3 L, N, R, V;
+
+    void main() 
+    {
+        vec4 ambientLight;
+        vec4 diffuseLight;
+        vec3 specularLight;
+        vec4 v_color = vec4(0.0,0.0,0.0,1.0);
+
+        //ambient light
+        ambientLight = K_a * diffuseColor;
+
+        if (dot(N,L) > 0.0)
+        {
+            diffuseLight = K_d * diffuseColor * dot(N,L); 
+        }
+        else
+        {
+            diffuseLight = vec4(0.0,0.0,0.0,1.0);
+        }
+
+        if(dot(R,V) > 0.0)
+        {
+            specularLight = K_s * specularColor * pow(dot(R,V),specularExponent);
+        }
+        else
+        {
+            specularLight = vec3(0.0,0.0,0.0);
+        }
+
+        vec4 totalLight = vec4(specularLight, 1.0);
+        v_color = ambientLight + diffuseLight + totalLight;
+
+        
+        if(object_flag == 1) //grass and tree tops
+        {
+            gl_FragColor = v_color * vec4(0.000, 0.502, 0.000, 1.0) ;
+        }
+        else if(object_flag == 2) //road
+        {
+            gl_FragColor = v_color * vec4(0.663, 0.663, 0.663, 1.0);
+        }
+        else if(object_flag == 3) //tree trunks
+        {
+            gl_FragColor = v_color * vec4(0.545, 0.271, 0.075, 1.0);
+        }
+        else if(object_flag == 4) //light post (not bulb)
+        {
+            gl_FragColor = v_color * vec4(0.412, 0.412, 0.412, 1.0);
+        }
+        else if(object_flag == 5) //light bulb in morning
+        {
+            gl_FragColor = v_color * vec4(0.000, 0.000, 0.000, 1.0);
+        }
+        else if(object_flag == 6) //sun-moon
+        {
+            gl_FragColor = vec4(0.941, 0.902, 0.549, 1.0);
+        }
+        else if(object_flag == 7) //car body
+        {
+            gl_FragColor = v_color * vec4(1.000, 0.000, 0.000, 1.0);
+        }
+        else if(object_flag == 8) //car head lights
+        {
+            gl_FragColor = v_color * vec4(0.933, 0.910, 0.667, 1.0);
+        }
+        else if(object_flag == 9) //car tires
+        {
+            gl_FragColor = v_color * vec4(0, 0, 0, 1.0);
+        }
+        else if(object_flag == 10) //car spokes and axels
+        {
+            gl_FragColor = v_color * vec4(1.000, 1.000, 0.000, 1.0);
+        }
+        else
+        {
+            gl_FragColor = vec4(0,0,0,0);
+        }
+    }
+</script>
+
+
+<script src="gl-matrix-min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script src="trackball-rotator.js"></script>
+<script src="models.js"></script>
+<script src = "final.js"></script>
+</head>
+
+<body onload="init()">
+Name: Jeremy Parnell<br/>
+Student ID: 27005248<br/>
+
+<div id="canvas-holder">
+   <canvas width=800 height=800 id="myGLCanvas"</canvas>
+</div>
+
+</body>
+
+</html>
+
